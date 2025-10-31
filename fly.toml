@@ -1,0 +1,140 @@
+# Fly.io Configuration para Servidor SSH Linux + OpenVSCode Server
+# Gerado baseado em docker-compose.yml
+# 
+# IMPORTANTE: Na Fly.io, o roteamento de borda é gerenciado automaticamente.
+# Não é necessário mapear portas como 2222:22 - apenas expor a porta interna 22.
+#
+# Para criar volumes persistentes, execute antes do deploy:
+# fly volumes create data --size 1
+# fly volumes create www --size 1
+# fly volumes create projects --size 1
+# fly volumes create logs --size 1
+# fly volumes create openvscode-data --size 3
+
+app = "ssh-vscode-server"
+primary_region = "gru"  # São Paulo (ajuste conforme sua região preferida)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  TZ = "America/Sao_Paulo"
+  OPENVSCODE_SERVER_ROOT = "/home/admin/.openvscode-server"
+
+# Configuração do processo
+[processes]
+  app = "/start.sh"
+
+# Serviço HTTP principal (OpenVSCode Server na porta 3000)
+[http_service]
+  internal_port = 3000
+  force_https = false
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+# Serviço SSH na porta 22 (TCP)
+[[services]]
+  internal_port = 22
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 22
+    handlers = ["tls", "connection"]
+
+# Serviço HTTP na porta 80
+[[services]]
+  internal_port = 80
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = false
+
+# Serviço HTTPS na porta 443
+[[services]]
+  internal_port = 443
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+# Serviço na porta 8080
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 8080
+    handlers = ["http"]
+
+# Serviço na porta 3001
+[[services]]
+  internal_port = 3001
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 3001
+    handlers = ["http"]
+
+# Serviço na porta 8081
+[[services]]
+  internal_port = 8081
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 8081
+    handlers = ["http"]
+
+# Serviço na porta 8000
+[[services]]
+  internal_port = 8000
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 8000
+    handlers = ["http"]
+
+# Volumes persistentes
+# Nota: Os volumes devem ser criados antes do deploy com 'fly volumes create <nome> --size <tamanho>'
+[[mounts]]
+  source = "data"
+  destination = "/home/admin/data"
+
+[[mounts]]
+  source = "www"
+  destination = "/var/www/html"
+
+[[mounts]]
+  source = "projects"
+  destination = "/home/admin/projects"
+
+[[mounts]]
+  source = "logs"
+  destination = "/var/log"
+
+[[mounts]]
+  source = "openvscode-data"
+  destination = "/home/admin/.openvscode-server"
+
+# Configurações de recursos (ajuste conforme necessário)
+[resources]
+  cpu = "shared-cpu-1x"
+  memory = "1gb"
+
+# Configurações adicionais da VM
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 1024
+
