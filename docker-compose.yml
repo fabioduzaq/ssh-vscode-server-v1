@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  ssh-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ssh-vscode-server
+    hostname: ssh-server
+    ports:
+      - "2222:22"      # SSH (mapeado para 2222 para evitar conflito)
+      - "80:80"        # HTTP
+      - "443:443"      # HTTPS
+      - "3000:3000"    # OpenVSCode Server
+      - "8080:8080"    # Servidor web alternativo
+      - "3001:3001"    # Porta adicional
+      - "8081:8081"    # Porta adicional
+      - "8000:8000"    # Porta adicional
+    volumes:
+      - ./data:/home/admin/data
+      - ./www:/var/www/html
+      - ./projects:/home/admin/projects
+      - ./logs:/var/log
+      - openvscode-data:/home/admin/.openvscode-server
+    environment:
+      - TZ=America/Sao_Paulo
+      - OPENVSCODE_SERVER_ROOT=/home/admin/.openvscode-server
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - ssh-network
+
+volumes:
+  openvscode-data:
+    driver: local
+
+networks:
+  ssh-network:
+    driver: bridge
+
